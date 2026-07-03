@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SQLWithPython – Query Studio</title>
+  <!-- Bootstrap 5 + Select2 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+  <style>
+    :root{
+      --bs-primary:#4f46e5;/*indigo‑600*/
+      --bs-light-bg:#f8f9ff;/*slate‑50*/
+    }
+    body{background:var(--bs-light-bg);} 
+    .select2-container .select2-selection{min-height:2.4rem;padding:.25rem .5rem;border:1px solid #ced4da;border-radius:.375rem}
+    .select2-container .select2-selection__arrow{top:.5rem}
+    pre.sql{background:#f8fafc;border:1px solid #e2e8f0;border-radius:.5rem;padding:1rem;font-family:"JetBrains Mono",monospace;font-size:.875rem;white-space:pre-wrap}
+  </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-2">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-semibold" href="#">SQLWithPython</a>
+    <div class="ms-auto">
+      <select id="langSel" class="form-select form-select-sm bg-light">
+        <option value="zh-TW">繁體中文</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+  </div>
+</nav>
+<div class="container-xl pb-5">
+  <!-- tabs -->
+  <ul class="nav nav-tabs" id="modeTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="raw-tab" data-bs-toggle="tab" data-bs-target="#raw" type="button" role="tab" aria-controls="raw" aria-selected="true" data-i18n="tab_raw">原始 SQL</button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="form-tab" data-bs-toggle="tab" data-bs-target="#form" type="button" role="tab" aria-controls="form" aria-selected="false" data-i18n="tab_form">表單 SQL</button>
+    </li>
+  </ul>
+  <div class="tab-content border border-top-0 p-4 bg-white rounded-bottom shadow-sm" id="tabContent">
+    <!-- Raw SQL -->
+    <div class="tab-pane fade show active" id="raw" role="tabpanel" aria-labelledby="raw-tab">
+      <label class="form-label" data-i18n="editor_label">編輯器</label>
+      <textarea id="rawArea" class="form-control mb-3" rows="6">SELECT * FROM customers LIMIT 10;</textarea>
+    </div>
+    <!-- Form SQL -->
+    <div class="tab-pane fade" id="form" role="tabpanel" aria-labelledby="form-tab">
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">SELECT</label>
+          <select id="selSelect" class="form-select select2" multiple></select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">FROM</label>
+          <select id="selFrom" class="form-select select2"></select>
+        </div>
+      </div>
+      <div class="border rounded p-3 mb-3" style="background:#f1f5ff">
+        <label class="form-label fw-semibold mb-2">WHERE</label>
+        <!-- Condition 1 -->
+        <div class="row g-2 align-items-center mb-2">
+          <div class="col-md-3"><select class="form-select select2 col-table"></select></div>
+          <div class="col-md-3"><select class="form-select select2 col-col"></select></div>
+          <div class="col-md-2"><select class="form-select op">
+            <option value="=">=</option><option value="&gt;">&gt;</option><option value="&lt;">&lt;</option><option value="LIKE">LIKE</option>
+          </select></div>
+          <div class="col-md-4"><input type="text" class="form-control val" data-i18n-placeholder="placeholder_value" placeholder="值"></div>
+        </div>
+        <!-- AND/OR selector -->
+        <div class="row g-2 align-items-center mb-2">
+          <div class="col-md-2 offset-md-3"><select id="logicSel" class="form-select">
+            <option value="AND">AND</option><option value="OR">OR</option>
+          </select></div>
+        </div>
+        <!-- Condition 2 -->
+        <div class="row g-2 align-items-center">
+          <div class="col-md-3"><select class="form-select select2 col-table"></select></div>
+          <div class="col-md-3"><select class="form-select select2 col-col"></select></div>
+          <div class="col-md-2"><select class="form-select op">
+            <option value="=">=</option><option value="&gt;">&gt;</option><option value="&lt;">&lt;</option><option value="LIKE">LIKE</option>
+          </select></div>
+          <div class="col-md-4"><input type="text" class="form-control val" data-i18n-placeholder="placeholder_value" placeholder="值"></div>
+        </div>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">ORDER BY</label>
+          <select id="selOrder" class="form-select select2"></select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-semibold">方向</label>
+          <select id="selDir" class="form-select"><option value="ASC">ASC</option><option value="DESC">DESC</option></select>
+        </div>
+      </div>
+    </div>
+    <!-- Run -->
+    <div class="text-end">
+      <button id="runBtn" class="btn btn-primary"><span data-i18n="btn_run">執行查詢</span></button>
+    </div>
+  </div>
+  <!-- Result -->
+  <div id="resultBox" class="mt-4 d-none">
+    <h5 class="fw-semibold mb-2" data-i18n="gen_sql_title">產生 SQL</h5>
+    <pre id="sqlShow" class="sql"></pre>
+    <h5 class="fw-semibold mt-4 mb-2" data-i18n="query_results_title">查詢結果</h5>
+    <div class="table-responsive">
+      <table id="resTable" class="table table-bordered table-striped small"></table>
+    </div>
+  </div>
+</div>
+
+<!-- CDN Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+/* ---------- i18n data ---------- */
+const tData={
+  'en':{tab_raw:'Raw SQL',tab_form:'Form SQL',editor_label:'Editor',btn_run:'Run Query',placeholder_value:'Value',gen_sql_title:'Generated SQL',query_results_title:'Query Results',showing_rows:'Showing _ rows',execution_time:'Execution time: _s'},
+  'zh-TW':{tab_raw:'原始 SQL',tab_form:'表單 SQL',editor_label:'編輯器',btn_run:'執行查詢',placeholder_value:'值',gen_sql_title:'產生 SQL',query_results_title:'查詢結果',showing_rows:'顯示 _ 筆',execution_time:'執行時間：_秒'}
+};
+function applyLang(l){$('[data-i18n]').each(function(){const k=$(this).data('i18n');$(this).text(tData[l][k])});$('[data-i18n-placeholder]').each(function(){const k=$(this).data('i18n-placeholder');$(this).attr('placeholder',tData[l][k])});localStorage.setItem('lang',l)}
+$('#langSel').on('change',e=>applyLang(e.target.value));applyLang(localStorage.getItem('lang')||'zh-TW');
+/* ---------- Select2 init ---------- */
+$('.select2').select2({theme:'bootstrap-5',width:'100%'});
+const tables=['customers','orders','orderdetails','products'];
+$('#selFrom').append(tables.map(t=>`<option value="${t}">${t}</option>`));
+$('#selOrder').append(['id','name','created_at'].map(c=>`<option>${c}</option>`));
+// populate table selectors
+$('.col-table').each((i,el)=>{tables.forEach(t=>$(el).append(`<option>${t}</option>`))});
+// placeholder column list
+const cols=['id','name','status','created_at'];
+$('.col-col').each((i,el)=>{cols.forEach(c=>$(el).append(`<option>${c}</option>`))});
+$('#selSelect').append(['*',...cols].map(c=>`<option>${c}</option>`));
+$('.select2').trigger('change');
+/* ---------- Run Query (mock) ---------- */
+$('#runBtn').on('click',()=>{
+  let sql='';
+  if($('#raw').hasClass('show')){
+    sql=$('#rawArea').val();
+  }else{
+    // build sql from form (simple demo)
+    const selCols=$('#selSelect').val().join(',')||'*';
+    const from=$('#selFrom').val();
+    const t1=$('.col-table').eq(0).val(),c1=$('.col-col').eq(0).val(),op1=$('.op').eq(0).val(),v1=$('.val').eq(0).val();
+    const logic=$('#logicSel').val();
+    const t2=$('.col-table').eq(1).val(),c2=$('.col-col').eq(1).val(),op2=$('.op').eq(1).val(),v2=$('.val').eq(1).val();
+    const orderby=$('#selOrder').val();
+    const dir=$('#selDir').val();
+    sql=`SELECT ${selCols}\nFROM ${from}\nWHERE ${t1}.${c1} ${op1} ${v1}\n  ${logic} ${t2}.${c2} ${op2} ${v2}\nORDER BY ${orderby} ${dir};`;
+  }
+  $('#sqlShow').text(sql);
+  // fake results
+  $('#resTable').html('<thead><tr><th>id</th><th>name</th><th>created_at</th></tr></thead><tbody><tr><td>1</td><td>Alice</td><td>2026-07-03</td></tr><tr><td>2</td><td>Bob</td><td>2026-07-01</td></tr></tbody>');
+  $('#resultBox').removeClass('d-none');
+});
+</script>
+</body>
+</html>

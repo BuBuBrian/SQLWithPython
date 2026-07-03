@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SQL Architect – Query Studio</title>
+
+  <!-- ✅ 1. Tailwind：維持 Page07 質感色系 -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode:"class",
+      theme:{
+        extend:{colors:{primary:'#3525cd'}}
+      }
+    }
+  </script>
+
+  <!-- ✅ 2. Select2 + Alpine.js（下拉與交互）-->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.full.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <!-- ✅ 3. 自訂字型 -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    body{font-family:'Inter',sans-serif;background:#f0f4f8}
+    .select2-selection{min-height:2.4rem!important}
+  </style>
+</head>
+<body class="h-full flex flex-col">
+  <!-- =========  顶栏  ========= -->
+  <header class="bg-gradient-to-r from-[#1e293b] via-[#1e3a8a] to-primary text-white py-6 px-6">
+    <div class="max-w-7xl mx-auto relative">
+      <p class="text-sm tracking-widest mb-1 opacity-80">SQLWITHPYTHON</p>
+      <h1 class="text-3xl font-bold mb-2">Web SQL 查詢工具 – 進階版</h1>
+      <p class="text-sm opacity-80">支持 Raw SQL 與表單下拉查詢、雙語切換。</p>
+      <!-- 語言切換 -->
+      <select id="langSel" class="absolute top-4 right-6 bg-white/10 border-white/20 border text-white text-sm rounded px-2 py-1">
+        <option class="text-black" value="zh-TW">繁體中文</option>
+        <option class="text-black" value="en">English</option>
+      </select>
+    </div>
+  </header>
+
+  <div class="flex-1 w-full max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 p-6" x-data="queryApp()" x-init="init()">
+    <!-- =========  側邊欄  ========= -->
+    <aside class="w-full lg:w-64 bg-white rounded-xl shadow border border-slate-100 p-6 h-fit">
+      <h2 class="text-lg font-semibold mb-3" x-text="t.side_tables">資料表</h2>
+      <template x-for="tbl in tables" :key="tbl.name">
+        <button class="flex justify-between items-center w-full text-sm py-2 px-3 rounded hover:bg-slate-50" :class="tbl.name===currentTable?'bg-slate-100 font-medium':''" @click="selectTable(tbl.name)">
+          <span x-text="tbl.name"></span>
+          <span class="text-xs text-slate-400" x-text="tbl.rows+' rows'"></span>
+        </button>
+      </template>
+    </aside>
+
+    <!-- =========  主內容  ========= -->
+    <main class="flex-1 flex flex-col gap-6">
+      <!-- Tab 切換 -->
+      <div class="bg-white rounded-xl shadow border border-slate-100 p-6 flex flex-col gap-6">
+        <div class="border-b border-slate-200 flex gap-4">
+          <button :class="mode==='raw' ? 'border-primary text-primary' : 'border-transparent text-slate-500'" @click="mode='raw'" class="px-1 pb-2 border-b-2 font-medium text-sm" x-text="t.tab_raw">原始 SQL</button>
+          <button :class="mode==='form' ? 'border-primary text-primary' : 'border-transparent text-slate-500'" @click="mode='form'" class="px-1 pb-2 border-b-2 font-medium text-sm" x-text="t.tab_form">表單 SQL</button>
+        </div>
+
+        <!-- Raw SQL 區域 -->
+        <div x-show="mode==='raw'" class="space-y-4">
+          <label class="text-sm font-semibold" x-text="t.editor_label">編輯器</label>
+          <textarea x-model="rawSql" class="w-full min-h-[140px] p-4 rounded border border-slate-200 font-mono text-sm"></textarea>
+        </div>
+
+        <!-- Form SQL 區域 -->
+        <div x-show="mode==='form'" class="space-y-4">
+          <!-- SELECT / FROM -->
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <label class="text-sm font-semibold block mb-1">SELECT</label>
+              <select id="selSelect" multiple x-ref="selectCols" class="form-select select2 w-full"></select>
+            </div>
+            <div>
+              <label class="text-sm font-semibold block mb-1">FROM</label>
+              <select x-model="fromTable" class="form-select select2 w-full">
+                <template x-for="tbl in tables" :key="tbl.name"><option x-text="tbl.name"></option></template>
+              </select>
+            </div>
+          </div>
+          <!-- WHERE 兩條件 -->
+          <div class="bg-slate-50 border border-slate-200 rounded p-4 space-y-3">
+            <label class="text-sm font-semibold block mb-2">WHERE</label>
+            <template x-for="(cond,i) in conditions" :key="i">
+              <div class="grid grid-cols-12 gap-2 items-center">
+                <select class="col-span-3 select2"></select>
+                <select class="col-span-2 select2 op">
+                  <option value="=">=</option><option value=">">&gt;</option><option value="<"><</option><option value="LIKE">LIKE</option>
+                </select>
+                <input type="text" class="col-span-4 border rounded p-2 text-sm" placeholder="Value" />
+                <template x-if="i===0"><select x-model="logic" class="col-span-3 select2"><option>AND</option><option>OR</option></select></template>
+              </div>
+            </template>
+          </div>
+          <!-- ORDER BY -->
+          <div class="grid md:grid-cols-3 gap-4 items-end">
+            <div>
+              <label class="text-sm font-semibold block mb-1">ORDER BY</label>
+              <select x-ref="orderCol" class="form-select select2 w-full"></select>
+            </div>
+            <div>
+              <label class="text-sm font-semibold block mb-1">方向</label>
+              <select x-model="orderDir" class="form-select w-full"><option>ASC</option><option>DESC</option></select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Run button -->
+        <div class="text-right pt-2">
+          <button @click="runQuery" class="px-6 py-2 rounded-full text-white bg-primary hover:bg-indigo-700" x-text="t.btn_run">執行查詢</button>
+        </div>
+      </div>
+
+      <!-- 結果區 -->
+      <div class="bg-white rounded-xl shadow border border-slate-100 p-6" x-show="rows.length">
+        <h2 class="text-lg font-semibold mb-3" x-text="t.query_results_title">查詢結果</h2>
+        <p class="text-sm text-slate-500 mb-4"><span x-text="t.engine_label"></span>｜<span x-text="t.rows_label"></span><span x-text="rows.length"></span></p>
+        <div class="overflow-x-auto border border-slate-200 rounded">
+          <table class="min-w-full text-sm">
+            <thead class="bg-slate-50 text-slate-600">
+              <tr><template x-for="col in displayColumns" :key="col"><th class="px-4 py-2 border-b border-slate-200 text-left" x-text="col"></th></template></tr>
+            </thead>
+            <tbody><template x-for="(r,idx) in rows" :key="idx"><tr :class="idx%2?'bg-white':'bg-slate-50'"><template x-for="cell in r" :key="cell"><td class="px-4 py-2 border-b border-slate-100 whitespace-nowrap" x-text="cell===null?'NULL':cell"></td></template></tr></template></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- =========  i18n / Select2 / Demo JS  ========= -->
+  <script>
+    const tData={
+      'en':{tab_raw:'Raw SQL',tab_form:'Form SQL',editor_label:'Editor',btn_run:'Run Query',side_tables:'Tables',query_results_title:'Query Results',engine_label:'Engine : Demo',rows_label:'Rows : '},
+      'zh-TW':{tab_raw:'原始 SQL',tab_form:'表單 SQL',editor_label:'編輯器',btn_run:'執行查詢',side_tables:'資料表',query_results_title:'查詢結果',engine_label:'Engine : Demo',rows_label:'筆數：'}
+    };
+
+    function queryApp(){
+      return{
+        lang:localStorage.getItem('lang')||'zh-TW',
+        get t(){return tData[this.lang]},
+        mode:'raw',
+        tables:[{name:'customers',rows:91},{name:'orders',rows:196},{name:'products',rows:77}],
+        currentTable:'customers',
+        fromTable:'customers',
+        columns:['id','name','status','created_at'],
+        rawSql:'SELECT * FROM customers LIMIT 10;',
+        conditions:[{},{ }],logic:'AND',orderDir:'ASC',rows:[],displayColumns:[],
+
+        init(){document.getElementById('langSel').addEventListener('change',e=>{this.lang=e.target.value;localStorage.setItem('lang',this.lang);this.$nextTick(()=>this.translate())});this.translate();$('.select2').select2({theme:'bootstrap-5',width:'100%'});this.$nextTick(()=>{$(this.$refs.selectCols).append(this.columns.map(c=>`<option>${c}</option>`)).val(['*']).trigger('change');$(this.$refs.orderCol).append(this.columns.map(c=>`<option>${c}</option>`))});},
+        translate(){Object.entries(this.t).forEach(([k,v])=>{document.querySelectorAll(`[x-text="t.${k}"]`).forEach(el=>el.innerText=v)})},
+        selectTable(tbl){this.currentTable=tbl;this.fromTable=tbl;this.rawSql=`SELECT * FROM ${tbl} LIMIT 10;`},
+        buildSql(){if(this.mode==='raw')return this.rawSql;const sel= $(this.$refs.selectCols).val().join(',')||'*';const where=''//簡化  
+        const order=$(this.$refs.orderCol).val();let sql=`SELECT ${sel} FROM ${this.fromTable}`;return sql + (where?` WHERE ${where}`:'') + (order?` ORDER BY ${order} ${this.orderDir}`:'') + ';';},
+        runQuery(){const sql=this.buildSql();console.log('執行 SQL:',sql);this.displayColumns=this.columns;this.rows=[[1,'Alice','A',Date.now()],[2,'Bob',null,Date.now()]];}
+      }
+    }
+  </script>
+</body>
+</html>
