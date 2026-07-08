@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+
+<html lang="zh-TW" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SQL Architect - Query Interface</title>
+<!-- Tailwind CSS Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-secondary-fixed-variant": "#004c6e",
+                      "on-error": "#ffffff",
+                      "error-container": "#ffdad6",
+                      "on-tertiary-fixed": "#351000",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "surface-bright": "#f8f9ff",
+                      "secondary-container": "#39b8fd",
+                      "on-secondary-container": "#004666",
+                      "error": "#ba1a1a",
+                      "secondary-fixed": "#c9e6ff",
+                      "on-error-container": "#93000a",
+                      "on-tertiary-container": "#ffd2be",
+                      "on-primary": "#ffffff",
+                      "on-primary-container": "#dad7ff",
+                      "surface-variant": "#d5e3fd",
+                      "tertiary-fixed-dim": "#ffb695",
+                      "tertiary-fixed": "#ffdbcc",
+                      "surface-container-lowest": "#ffffff",
+                      "on-primary-fixed-variant": "#3323cc",
+                      "inverse-on-surface": "#ebf1ff",
+                      "surface": "#f8f9ff",
+                      "background": "#f8f9ff",
+                      "primary-container": "#4f46e5",
+                      "primary-fixed": "#e2dfff",
+                      "on-secondary-fixed": "#001e2f",
+                      "outline": "#777587",
+                      "surface-container": "#e6eeff",
+                      "tertiary": "#7e3000",
+                      "surface-container-highest": "#d5e3fd",
+                      "on-surface": "#0d1c2f",
+                      "surface-dim": "#ccdbf4",
+                      "surface-container-low": "#eff4ff",
+                      "on-background": "#0d1c2f",
+                      "on-tertiary-fixed-variant": "#7b2f00",
+                      "inverse-surface": "#233144",
+                      "surface-tint": "#4d44e3",
+                      "on-surface-variant": "#464555",
+                      "primary-fixed-dim": "#c3c0ff",
+                      "on-primary-fixed": "#0f0069",
+                      "primary": "#3525cd",
+                      "surface-container-high": "#dde9ff",
+                      "secondary-fixed-dim": "#89ceff",
+                      "outline-variant": "#c7c4d8",
+                      "secondary": "#006591",
+                      "inverse-primary": "#c3c0ff",
+                      "tertiary-container": "#a44100"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "xl": "32px",
+                      "gutter": "16px",
+                      "lg": "24px",
+                      "xs": "4px",
+                      "md": "16px",
+                      "sm": "8px",
+                      "container-max": "1440px",
+                      "base": "4px"
+              },
+              "fontFamily": {
+                      "headline-lg": [
+                              "Inter", "sans-serif"
+                      ],
+                      "body-md": [
+                              "Inter", "sans-serif"
+                      ],
+                      "code-md": [
+                              "JetBrains Mono", "monospace"
+                      ],
+                      "headline-sm": [
+                              "Inter", "sans-serif"
+                      ],
+                      "body-lg": [
+                              "Inter", "sans-serif"
+                      ],
+                      "label-sm": [
+                              "Inter", "sans-serif"
+                      ],
+                      "headline-md": [
+                              "Inter", "sans-serif"
+                      ]
+              },
+              "fontSize": {
+                      "headline-lg": [
+                              "30px",
+                              {
+                                      "lineHeight": "38px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "code-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "22px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-sm": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts & Material Symbols -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            background-color: #f0f4f8;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .code-textarea {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 1rem;
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            width: 100%;
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        .code-textarea:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-primary-custom {
+            background-color: #3b82f6;
+            color: white;
+            padding: 8px 24px;
+            border-radius: 9999px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-primary-custom:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-secondary-custom {
+            background-color: #eff6ff;
+            color: #3b82f6;
+            padding: 8px 24px;
+            border-radius: 9999px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary-custom:hover {
+            background-color: #dbeafe;
+        }
+
+        .table-row-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            margin-bottom: 8px;
+            background-color: white;
+            cursor: pointer;
+        }
+        .table-row-item:hover {
+            background-color: #f8fafc;
+        }
+    </style>
+<!-- i18n Data & Functions -->
+<script>
+    const translations = {
+        'en': {
+            'header_subtitle': 'SQLWITHPYTHON',
+            'header_title': 'Web SQL Query Tool MVP',
+            'header_desc': 'SQL query tool built with Flask + HTML/CSS, supporting Demo mode and MySQL mode.',
+            'sql_commands_title': 'SQL Commands',
+            'sql_commands_desc': 'Version 1 only allows SELECT queries. You can use WHERE, JOIN, GROUP BY, HAVING, ORDER BY etc. SELECT syntax.',
+            'data_source_label': 'Data Source',
+            'demo_db_label': 'Demo Database (No MySQL needed)',
+            'mysql_db_label': 'MySQL Database (Reads .env)',
+            'input_sql_label': 'Input SQL',
+            'btn_run': 'Run Query',
+            'btn_reload': 'Reload demo.sql',
+            'demo_tables_title': 'Demo Tables',
+            'demo_tables_desc': 'Demo mode will convert `demo.sql` to a local SQLite database, convenient when MySQL is not available.',
+            'query_results_title': 'Query Results',
+            'engine_label': 'Engine : SQLite Demo',
+            'rows_label': 'Rows : ',
+            'lang_label': 'Language',
+            'placeholder_value': 'Value',
+            'btn_running': 'Running...'
+        },
+        'zh-TW': {
+            'header_subtitle': 'SQLWITHPYTHON',
+            'header_title': 'Web SQL 查詢工具 MVP',
+            'header_desc': '使用 Flask + HTML/CSS 建立的 SQL 查詢工具，支援 Demo 模式與 MySQL 模式。',
+            'sql_commands_title': 'SQL 指令',
+            'sql_commands_desc': '第一版只允許 SELECT 查詢。可使用 WHERE、JOIN、GROUP BY、HAVING、ORDER BY 等 SELECT 語法。',
+            'data_source_label': '資料來源',
+            'demo_db_label': 'Demo Database ( 不用 MySQL )',
+            'mysql_db_label': 'MySQL Database ( 讀取 .env )',
+            'input_sql_label': '輸入 SQL',
+            'btn_run': '執行查詢',
+            'btn_reload': '重新載入 demo.sql',
+            'demo_tables_title': 'Demo 資料表',
+            'demo_tables_desc': 'Demo 模式會將 `demo.sql` 轉成本機 SQLite 資料庫，方便沒有 MySQL 時展示。',
+            'query_results_title': '查詢結果',
+            'engine_label': 'Engine : SQLite Demo',
+            'rows_label': 'Rows : ',
+            'lang_label': '語言',
+            'placeholder_value': '值',
+            'btn_running': '執行中...'
+        }
+    };
+
+    window.changeLanguage = function(lang) {
+        if (!translations[lang]) return;
+        const t = translations[lang];
+
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (t[key]) {
+                el.textContent = t[key];
+            }
+        });
+
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            if (t[key]) {
+                el.placeholder = t[key];
+            }
+        });
+
+        localStorage.setItem('sql_architect_lang', lang);
+    };
+</script>
+</head>
+<body class="bg-[#f0f4f8] text-on-background font-body-lg min-h-screen flex flex-col">
+<!-- Top Banner Header -->
+<header class="bg-gradient-to-r from-[#1e293b] via-[#1e3a8a] to-[#2563eb] text-white pt-8 pb-10 px-8 w-full shadow-md">
+<div class="max-w-[1600px] mx-auto w-full">
+<p class="text-[13px] font-medium tracking-wider mb-2 text-slate-300" data-i18n="header_subtitle">SQLWITHPYTHON</p>
+<h1 class="text-4xl font-bold mb-3" data-i18n="header_title">Web SQL 查詢工具 MVP</h1>
+<p class="text-sm text-slate-200" data-i18n="header_desc">使用 Flask + HTML/CSS 建立的 SQL 查詢工具，支援 Demo 模式與 MySQL 模式。</p>
+<!-- Language Selector moved to header for utility -->
+<div class="absolute top-4 right-8">
+<select class="bg-white/10 border border-white/20 text-white rounded px-2 py-1 text-sm outline-none focus:border-white/50" id="lang-selector">
+<option class="text-black" value="zh-TW">繁體中文</option>
+<option class="text-black" value="en">English</option>
+</select>
+</div>
+</div>
+</header>
+<div class="flex-1 w-full max-w-[1600px] mx-auto p-6 md:p-8">
+<div class="flex flex-col lg:flex-row gap-6">
+<!-- Left Column: SQL Commands -->
+<div class="flex-1 flex flex-col gap-6">
+<div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 md:p-8">
+<h2 class="text-xl font-bold text-slate-800 mb-2" data-i18n="sql_commands_title">SQL 指令</h2>
+<p class="text-sm text-slate-500 mb-6" data-i18n="sql_commands_desc">第一版只允許 SELECT 查詢。可使用 WHERE、JOIN、GROUP BY、HAVING、ORDER BY 等 SELECT 語法。</p>
+<!-- Data Source -->
+<div class="mb-6 relative border border-slate-200 rounded-lg p-5 pt-6">
+<span class="absolute -top-3 left-4 bg-white px-2 text-sm text-slate-500 font-medium" data-i18n="data_source_label">資料來源</span>
+<div class="flex flex-col gap-3">
+<label class="flex items-center gap-3 cursor-pointer">
+<input checked="" class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300" name="datasource" type="radio" value="demo"/>
+<span class="text-sm text-slate-700" data-i18n="demo_db_label">Demo Database ( 不用 MySQL )</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer">
+<input class="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300" name="datasource" type="radio" value="mysql"/>
+<span class="text-sm text-slate-700" data-i18n="mysql_db_label">MySQL Database ( 讀取 .env )</span>
+</label>
+</div>
+</div>
+<!-- Input SQL -->
+<div class="mb-6">
+<label class="block text-sm font-bold text-slate-800 mb-2" data-i18n="input_sql_label">輸入 SQL</label>
+<textarea class="code-textarea text-slate-800" id="raw-sql-input" spellcheck="false">SELECT *
+FROM customers
+LIMIT 10;</textarea>
+</div>
+<!-- Action Buttons -->
+<div class="flex flex-col sm:flex-row gap-3">
+<button class="btn-primary-custom" data-i18n="btn_run" id="run-query-btn">執行查詢</button>
+<button class="btn-secondary-custom" data-i18n="btn_reload">重新載入 demo.sql</button>
+</div>
+</div>
+<!-- Query Results Section -->
+<div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 md:p-8" id="results-section">
+<h2 class="text-xl font-bold text-slate-800 mb-4" data-i18n="query_results_title">查詢結果</h2>
+<div class="flex items-center gap-4 text-sm text-slate-500 mb-4">
+<span data-i18n="engine_label">Engine : SQLite Demo</span>
+<span><span data-i18n="rows_label">Rows : </span><span id="row-count">196</span></span>
+</div>
+<!-- Results Table (Hidden initially, shown on click) -->
+<div class="hidden border border-slate-200 rounded-lg overflow-x-auto mt-4" id="results-table-container">
+<table class="w-full text-left border-collapse">
+<thead class="bg-slate-50 border-b border-slate-200 text-xs text-slate-600 uppercase">
+<tr>
+<th class="p-3 font-semibold">OrderID</th>
+<th class="p-3 font-semibold">CustomerID</th>
+<th class="p-3 font-semibold">EmployeeID</th>
+<th class="p-3 font-semibold">OrderDate</th>
+<th class="p-3 font-semibold">ShipperID</th>
+</tr>
+</thead>
+<tbody class="text-sm divide-y divide-slate-100" id="results-tbody">
+<!-- Populated by JS -->
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Right Column: Demo Tables -->
+<div class="w-full lg:w-[350px] shrink-0">
+<div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+<h2 class="text-xl font-bold text-slate-800 mb-3" data-i18n="demo_tables_title">Demo 資料表</h2>
+<p class="text-sm text-slate-500 mb-6 leading-relaxed" data-i18n="demo_tables_desc">Demo 模式會將 `demo.sql` 轉成本機 SQLite 資料庫，方便沒有 MySQL 時展示。</p>
+<div class="space-y-2"><div class="table-row-item"><div class="flex items-center gap-2 text-sm font-bold text-slate-800"><span class="material-symbols-outlined text-[18px]">play_arrow</span>categories</div><span class="text-sm text-slate-400">8 rows</span></div><div class="table-row-item"><div class="flex items-center gap-2 text-sm font-bold text-slate-800"><span class="material-symbols-outlined text-[18px]">play_arrow</span>customers</div><span class="text-sm text-slate-400">91 rows</span></div><div class="table-row-item"><div class="flex items-center gap-2 text-sm font-bold text-slate-800"><span class="material-symbols-outlined text-[18px]">play_arrow</span>employees</div><span class="text-sm text-slate-400">10 rows</span></div><div class="table-row-item"><div class="flex items-center gap-2 text-sm font-bold text-slate-800"><span class="material-symbols-outlined text-[18px]">play_arrow</span>orderdetails</div><span class="text-sm text-slate-400">518 rows</span></div><div class="table-row-item"><div class="flex items-center gap-2 text-sm font-bold text-slate-800"><span class="material-symbols-outlined text-[18px]">play_arrow</span>orders</div><span class="text-sm text-slate-400">196 rows</span></div><div class="table-row-item"><div class="flex items-center gap-2 text-sm font-bold text-slate-800"><span class="material-symbols-outlined text-[18px]">play_arrow</span>products</div><span class="text-sm text-slate-400">77 rows</span></div><div class="table-row-item"><div class="flex items-center gap-2 text-sm font-bold text-slate-800"><span class="material-symbols-outlined text-[18px]">play_arrow</span>shippers</div><span class="text-sm text-slate-400">3 rows</span></div><div class="table-row-item"><div class="flex items-center gap-2 text-sm font-bold text-slate-800"><span class="material-symbols-outlined text-[18px]">play_arrow</span>suppliers</div><span class="text-sm text-slate-400">29 rows</span></div></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Scripts -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const runBtn = document.getElementById('run-query-btn');
+            const resultsTableContainer = document.getElementById('results-table-container');
+            const resultsTbody = document.getElementById('results-tbody');
+            const langSelector = document.getElementById('lang-selector');
+
+            // Initialize Language
+            const savedLang = localStorage.getItem('sql_architect_lang') || 'zh-TW';
+            langSelector.value = savedLang;
+            window.changeLanguage(savedLang);
+
+            langSelector.addEventListener('change', (e) => {
+                window.changeLanguage(e.target.value);
+            });
+
+            // Mock Data Generator for Orders
+            const mockData = [
+                { orderID: 10248, customerID: 'VINET', employeeID: 5, orderDate: '1996-07-04', shipperID: 3 },
+                { orderID: 10249, customerID: 'TOMSP', employeeID: 6, orderDate: '1996-07-05', shipperID: 1 },
+                { orderID: 10250, customerID: 'HANAR', employeeID: 4, orderDate: '1996-07-08', shipperID: 2 },
+                { orderID: 10251, customerID: 'VICTE', employeeID: 3, orderDate: '1996-07-08', shipperID: 1 },
+                { orderID: 10252, customerID: 'SUPRD', employeeID: 4, orderDate: '1996-07-09', shipperID: 2 }
+            ];
+
+            // Run Query Logic
+            runBtn.addEventListener('click', () => {
+                const currentLang = langSelector.value;
+                const t = translations[currentLang];
+                
+                const originalText = runBtn.textContent;
+                runBtn.innerHTML = `<span class="material-symbols-outlined text-[18px] animate-spin align-middle mr-1">sync</span> <span data-i18n="btn_running">${t.btn_running}</span>`;
+                runBtn.disabled = true;
+
+                // Simulate network request
+                setTimeout(() => {
+                    // Render mock results
+                    resultsTbody.innerHTML = '';
+                    mockData.forEach(row => {
+                        const tr = document.createElement('tr');
+                        tr.className = 'hover:bg-slate-50 transition-colors text-slate-700';
+                        tr.innerHTML = `
+                            <td class="p-3">${row.orderID}</td>
+                            <td class="p-3">${row.customerID}</td>
+                            <td class="p-3">${row.employeeID}</td>
+                            <td class="p-3">${row.orderDate}</td>
+                            <td class="p-3">${row.shipperID}</td>
+                        `;
+                        resultsTbody.appendChild(tr);
+                    });
+
+                    // Show section
+                    resultsTableContainer.classList.remove('hidden');
+
+                    // Reset button
+                    runBtn.textContent = originalText;
+                    runBtn.setAttribute('data-i18n', 'btn_run');
+                    window.changeLanguage(langSelector.value); // re-apply translation if needed
+                    runBtn.disabled = false;
+                    
+                }, 600); // Simulated 600ms latency
+            });
+        });
+    </script>
+</body></html>
